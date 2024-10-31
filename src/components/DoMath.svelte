@@ -306,11 +306,17 @@
     }
 </script>
 
-<div class="divider"></div>
+<div class="divider divider-primary">Learning Path</div>
 
 <div class="hero bg-base-100">
     <div class="hero-content text-center">
-    <h1 class="text-2xl font-bold">Stellar Passkeys Example</h1>
+    <ul class="steps">
+        <li class="step step-info">Sign-in with Passkey</li>
+        <li class="step step-info">Invoke Smart Contract</li>
+        <li class="step step-info">Add Signer to Wallet</li>
+        <li class="step step-info">Transfer funds out of account</li>
+      </ul>
+
 </div>
 </div>
 
@@ -341,7 +347,7 @@
     </div>
     </div>
 
-    <div class="divider divider-primary">Do Math Contract</div>
+    <div class="divider divider-primary">Do-Math Contract</div>
 
     <div class="container mx-auto">
 
@@ -350,12 +356,12 @@
                 <button class="btn btn-primary" on:click={refresh}>Refresh</button>
 
                 <label class="input flex items-center gap-1">
-                    First Number
+                    First Int
                     <input class="input input-bordered flex items-center gap-1" type="number" name="a" id="a" bind:value={a} />
                 </label>
         
                 <label class="input flex items-center gap-1">
-                    Second Number
+                    Second Int
                     <input class="input input-bordered flex items-center gap-1" type="number" name="b" id="b" bind:value={b} />
                 </label>
 
@@ -391,7 +397,7 @@
 
     {#if keyId_}
 
-        <div class="divider divider-warning">Add Signer</div>
+        <div class="divider divider-warning">Add Classic Signer to Wallet</div>
 
 
         <div class="hero bg-base-100">
@@ -399,10 +405,10 @@
 
                 <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
                 <div tabindex="0" class="collapse collapse-arrow border-base-300 bg-base-200 border">
-                    <div class="collapse-title text-xl font-medium">Add Signer?</div>
+                    <div class="collapse-title text-xl font-medium">Add Signer???</div>
                     <div class="collapse-content">
                       <p>
-                        We will add a ed25519 signer to our wallet
+                        We will add a Classic Stellar account(ed25519)  signer to our wallet
 
 
                       </p>
@@ -416,6 +422,25 @@
                         Add Signer (Ed25519)
                     {/if}
                 </button>
+            </div>
+        </div>
+
+        <div class="divider divider-warning">Add Policy Signer to Wallet</div>
+
+        <div class="hero bg-base-100">
+            <div class="hero-content text-center">
+
+                <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
+                <div tabindex="0" class="collapse collapse-arrow border-base-300 bg-base-200 border">
+                    <div class="collapse-title text-xl font-medium">Add Policy???</div>
+                    <div class="collapse-content">
+                      <p>
+                        We will add a Policy signer to our wallet
+
+
+                      </p>
+                    </div>
+                  </div>
                 <button class="btn btn-active btn-accent" on:click={attach_Policy}>
                     {#if loading.get("attach_Policy")}
                     <span class="loading loading-spinner"></span>
@@ -433,6 +458,17 @@
     <br />
     <div class="hero bg-base-100">
         <div class="hero-content text-center">
+
+                        <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
+                        <div tabindex="0" class="collapse collapse-arrow border-base-300 bg-base-200 border">
+                            <div class="collapse-title text-xl font-medium">Transfer???</div>
+                            <div class="collapse-content">
+                              <p>
+                                Add the signer has granted access to transfer assets out of the account
+        
+                              </p>
+                            </div>
+                          </div>
 
         <button class="btn btn-error" on:click={transfer_Ed25519}>
             {#if loading.get("transfer_Ed25519")}
@@ -459,6 +495,11 @@
 </div>
 
 {:else}
+
+<div class="divider">Not Logged In</div>
+
+<div class="hero bg-base-100">
+    <div class="hero-content text-center">
     <button class="btn btn-active btn-primary" on:click={createWallet}>
         {#if loading.get("createWallet")}
         <span class="loading loading-spinner"></span>
@@ -466,6 +507,9 @@
             Sign In with Passkey
         {/if}
     </button>
+</div>
+</div>
+
 {/if}
 
 </div>
