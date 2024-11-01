@@ -1,10 +1,11 @@
 <script lang="ts">
     import { onMount } from "svelte";
-    import { xdr, scValToNative, Keypair } from "@stellar/stellar-sdk/minimal";
+    import { xdr, scValToNative, Keypair, Address, Option, None } from "@stellar/stellar-sdk/minimal";
     import { Client } from "do-math-sdk";
     import { PasskeyServer, PasskeyKit, SACClient, SignerStore, PasskeyClient, type SignerLimits, SignerKey } from "passkey-kit";
     import { fundPubkey, fundSigner } from "../lib/common";
     import QRCode from 'qrcode'
+    
 
     let url: URL
     let qr_code: string
@@ -13,6 +14,8 @@
         rpcUrl: import.meta.env.PUBLIC_RPC_URL,
         launchtubeUrl: import.meta.env.PUBLIC_LAUNCHTUBE_URL,
         launchtubeJwt: import.meta.env.PUBLIC_LAUNCHTUBE_JWT,
+        mercuryUrl: import.meta.env.PUBLIC_MERCURY_URL,
+        mercuryJwt: import.meta.env.PUBLIC_MERCURY_JWT
     });
 
     const pk_wallet = new PasskeyKit({
@@ -68,7 +71,9 @@
             // Call async function connectWallet
             // Then attach callback to execute fundWallet function
             // Upon successful execution
-            connectWallet(keyId).then(() => fundWallet());
+            console.log("Connecting Wallet...");
+            console.log(keyId);
+            connectWallet(keyId).then(() => console.log("Wallet Connected"));
 
         // If keyId is missing, but contract ID is present
         } else if (contractId) {
@@ -84,13 +89,13 @@
 
             contractId_ = contractId;
 
-            fundWallet();
+            //fundWallet();
         }   
 
         if (secret) {
             keypair = Keypair.fromSecret(secret);
         } else {
-            keypair = Keypair.random();
+            keypair = Keypair.fromSecret("SDR2433647HYYOOZYZHAYSHRIQ6GM7VFBBXLVJZOSBIIP6RXSMOLMPBW");
             url.searchParams.set("secret", keypair.secret());
             history.pushState({}, '', url);
         }
@@ -103,23 +108,36 @@
             loading.set("createWallet", true);
             loading = loading
 
-            const { keyId_base64, contractId, built } = await pk_wallet.createWallet(
+            const { keyId, keyId_base64, contractId, built } = await pk_wallet.createWallet(
                 "Do Math",
                 "Do Math",
             );
 
             keyId_ = keyId_base64;
 
+            console.log("keyid");
+            console.log(keyId_base64);
+
+            console.log(contractId);
+
+            console.log(built);
+
+            console.log("keypair");
+            console.log(keypair);
+            console.log(keypair.publicKey());
+            console.log(keypair.secret());
+
             const res = await pk_server.send(built);
 
             console.log(res);
+            console.log(keyId_);
 
             url.searchParams.set("keyId", keyId_);
             history.pushState({}, '', url);
 
             contractId_ = contractId;
 
-            fundWallet();
+            //fundWallet();
         } finally {
             loading.set("createWallet", false);
             loading = loading
@@ -129,6 +147,7 @@
         const { keyId_base64, contractId } = await pk_wallet.connectWallet({ keyId });
 
         keyId_ = keyId_base64;
+        console.log(keypair);
 
         if (!keyId) {
             url.searchParams.set("keyId", keyId_);
@@ -141,18 +160,43 @@
     async function doMath() {
         try {
             loading.set("doMath", true);
-            loading = loading
+            loading = loading;
 
-            const at = await contract.do_math({
+            console.log("Creating Client");
+    const deployedContract = await new Client({
+        rpcUrl: import.meta.env.PUBLIC_RPC_URL,
+        // Our deployed DO MATH smart contract
+        contractId: "CAXQTJZIN2CW2LRNR2FIRYZECYUIFV47UF65GKDLXPFTHHDCIPGSFBNL",
+        networkPassphrase: import.meta.env.PUBLIC_PASSPHRASE,
+    });
+
+    console.log("Invoking Contract");
+    console.log(deployedContract);
+
+    let sacAddress: Option<Address> = None;
+
+            const at = await deployedContract.do_math({
                 source: contractId_,
-                a: BigInt(a),
-                b: BigInt(b),
-                sac: undefined // import.meta.env.PUBLIC_NATIVE
+                a: 125,
+                b: 150,
+                sac: sacAddress
             });
 
-            await pk_wallet.sign(at, { keyId: keyId_ });
+            console.log(at);
+
+            console.log(keypair.secret());
+
+            console.log(keyId_)
+
+            console.log("Signing");
+            await pk_wallet.sign(at, { keypair })
+            .then(val => console.log(val))
+            .catch(err => console.log(err));
+
+            console.log("Sending");
             const res = await pk_server.send(at.built!);
 
+            console.log("Response");
             console.log(res);
 
             const meta = xdr.TransactionMeta.fromXDR(res.resultMetaXdr, "base64");
@@ -175,7 +219,7 @@
                 source: contractId_,
                 a: BigInt(a),
                 b: BigInt(b),
-                sac: undefined // import.meta.env.PUBLIC_NATIVE
+                sac: import.meta.env.PUBLIC_NATIVE // import.meta.env.PUBLIC_NATIVE
             });
             
             await pk_wallet.sign(at, { keypair });
@@ -202,12 +246,29 @@
             loading.set("addSigner_Ed25519", true);
             loading = loading
 
-            const at = await pk_wallet.addEd25519(keypair.publicKey(), new Map(), SignerStore.Temporary);
+            let addSignerKp = Keypair.fromSecret("SDR2433647HYYOOZYZHAYSHRIQ6GM7VFBBXLVJZOSBIIP6RXSMOLMPBW");
+
+            console.log(SignerStore.Temporary);
+            console.log(keypair.publicKey());
+
+            const at = await pk_wallet.addEd25519(addSignerKp.publicKey(), new Map(), SignerStore.Persistent);
+
+            console.log("Transaction");
+            console.log(at);
+            console.log(pk_server);
+            console.log(pk_wallet);
+            console.log("key id")
+            console.log(keyId_);
 
             await pk_wallet.sign(at, { keyId: keyId_ });
-            const res = await pk_server.send(at.built!);
 
-            console.log(res);
+            console.log(pk_wallet)
+
+            console.log("Sending...");
+            await pk_server.send(at.built!)
+            .then(res => console.log(res))
+            .catch(err => console.log(err));
+
         } finally {
             loading.set("addSigner_Ed25519", false);
             loading = loading
@@ -246,6 +307,13 @@
         .then(({ result }) => result)
         .catch(() => BigInt(0))
 
+        console.log(amount);
+
+        console.log("fundPubKey: ");
+        console.log(fundPubkey);
+        console.log(fundSigner.signAuthEntry);
+        console.log(fundSigner.signTransaction);
+
         if (amount > 1)
             return
         
@@ -260,8 +328,11 @@
 			signAuthEntry: fundSigner.signAuthEntry,
 		});
 
+
+
 		const res = await pk_server.send(built!);
 
+        console.log(fundPubkey);
 		console.log(res);
 	}
     async function transfer_Ed25519() {
@@ -490,7 +561,7 @@
 
 <div class="hero bg-base-100">
     <div class="hero-content text-center">
-    <img class="mt-2" src={qr_code} alt="qr code">
+    <img class="" src={qr_code} alt="qr code">
 </div>
 </div>
 

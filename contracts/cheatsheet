@@ -1,6 +1,58 @@
 stellar contract deploy --wasm target/wasm32-unknown-unknown/release/do_math.wasm --network testnet --source default
 stellar contract deploy --wasm target/wasm32-unknown-unknown/release/do_math_policy.wasm --network testnet --source default
 
-stellar contract bindings typescript --contract-id NIL --wasm target/wasm32-unknown-unknown/release/do_math.wasm --network testnet --output-dir do-math-sdk --overwrite
+stellar contract bindings typescript --contract-id CDU7JH665LVVIZGCRK3ZCWYOYYW72TB5RQ5PJSBXG43RZ35CAQQ7B7TT --wasm target/wasm32-unknown-unknown/release/do_math.wasm --network testnet --output-dir do-math-sdk --overwrite
 
 stellar contract invoke --id CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC --network testnet --source default -- transfer --from default --to CCGF5FRIVDCKJBD2WEFN67SI64QL6YP27OZY345NYGAYNOVFFG3IZ5O4 --amount 10000000
+
+
+stellar contract invoke --id CAXQTJZIN2CW2LRNR2FIRYZECYUIFV47UF65GKDLXPFTHHDCIPGSFBNL --source SDR2433647HYYOOZYZHAYSHRIQ6GM7VFBBXLVJZOSBIIP6RXSMOLMPBW --network testnet -- do_math --source GC5WM4AVJLRKDWCG7E3C45IKLZSNLM2N4HHBEJKKXDBJ3MH2NJIQ7VPQ --a 20 --b 30
+
+https://stellar.expert/explorer/testnet/account/GBKH6FAGVKOB6PAWQ5IAAM2DBQSJLVUDF4DXPJ5SCLDEP6KXRREFO4FX
+
+
+
+
+
+
+--
+MATH CONTRACT
+--
+
+
+--
+Contract ID
+--
+
+Hash return by deploy command
+Go to Stellar Expert:  https://stellar.expert/explorer/testnet/tx/ad6545cc93f186a236f7ddedd24cb32189ea52f02e378c7be4071297cbe084d0
+
+Value after "created contract"
+GC5W…7VPQ created contract CAXQ…FBNL from WASM code 152f841f…823d8453
+
+--
+Source
+--
+
+Secret Key of passkeys wallet returned by createWallet function execution
+
+--
+Source function param
+--
+Account that "created contract"
+Go to Stellar Expert:  https://stellar.expert/explorer/testnet/tx/ad6545cc93f186a236f7ddedd24cb32189ea52f02e378c7be4071297cbe084d0
+
+
+stellar contract invoke --id CAXQTJZIN2CW2LRNR2FIRYZECYUIFV47UF65GKDLXPFTHHDCIPGSFBNL --source SDR2433647HYYOOZYZHAYSHRIQ6GM7VFBBXLVJZOSBIIP6RXSMOLMPBW --network testnet -- do_math --source GC5WM4AVJLRKDWCG7E3C45IKLZSNLM2N4HHBEJKKXDBJ3MH2NJIQ7VPQ --a 20 --b 30
+
+
+----
+
+
+--
+Wallet Factory
+--
+
+
+stellar contract invoke --id CDVKH7KQMS7CZFYY77YQ7YIQSTBZKKDHETDYYRNZ6OYL22VCQ63MG7OW --source-account SDR2433647HYYOOZYZHAYSHRIQ6GM7VFBBXLVJZOSBIIP6RXSMOLMPBW --rpc-url https://soroban-testnet.stellar.org --network-passphrase "Test SDF Network ; September 2015" -- add --signer Ed25519(bb6670154ae2a1d846f9362e750a5e64d5b34de1ce12254ab8c29db0fa6a510f,Persistent)
+
