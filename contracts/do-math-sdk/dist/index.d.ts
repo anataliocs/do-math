@@ -1,12 +1,12 @@
 import { AssembledTransaction, Client as ContractClient, ClientOptions as ContractClientOptions } from '@stellar/stellar-sdk/contract';
-import type { i128, Option } from '@stellar/stellar-sdk/contract';
+import type { i128 } from '@stellar/stellar-sdk/contract';
 export * from '@stellar/stellar-sdk';
 export * as contract from '@stellar/stellar-sdk/contract';
 export * as rpc from '@stellar/stellar-sdk/rpc';
 export declare const networks: {
     readonly testnet: {
         readonly networkPassphrase: "Test SDF Network ; September 2015";
-        readonly contractId: "CAXQTJZIN2CW2LRNR2FIRYZECYUIFV47UF65GKDLXPFTHHDCIPGSFBNL";
+        readonly contractId: "CB2TOIAQHT6DZRLAZWJIZMQNBIKG2LJWBXCTXDDVVBNBZCXDSQD4H2DS";
     };
 };
 export declare const Errors: {};
@@ -14,11 +14,10 @@ export interface Client {
     /**
      * Construct and simulate a do_math transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
      */
-    do_math: ({ source, a, b, sac }: {
+    do_math: ({ source, a, b }: {
         source: string;
         a: i128;
         b: i128;
-        sac: Option<string>;
     }, options?: {
         /**
          * The fee to pay for the transaction. Default: BASE_FEE

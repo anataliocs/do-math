@@ -1,7 +1,7 @@
 <script lang="ts">
     import { onMount } from "svelte";
-    import { xdr, scValToNative, Keypair, Address, Option, None } from "@stellar/stellar-sdk/minimal";
-    import { Client } from "do-math-sdk";
+    import { xdr, scValToNative, Keypair, Address } from "@stellar/stellar-sdk/minimal";
+    import { Client, networks } from "do-math-sdk";
     import { PasskeyServer, PasskeyKit, SACClient, SignerStore, PasskeyClient, type SignerLimits, SignerKey } from "passkey-kit";
     import { fundPubkey, fundSigner } from "../lib/common";
     import QRCode from 'qrcode'
@@ -24,20 +24,24 @@
         factoryContractId: import.meta.env.PUBLIC_FACTORY,
     });
 
-    // Client that uses sac-sdk npm package to interact
+    // Client that uses sac-sdk to interact
     //with Soroban smart contracts
     const sac = new SACClient({
         // Public RPC node
         rpcUrl: import.meta.env.PUBLIC_RPC_URL,
         // Network passphrase for testnet Stellar network
         networkPassphrase: import.meta.env.PUBLIC_PASSPHRASE,
+        
+
     });
 
-    const contract = new Client({
+    //Generated typescript bindings for deployed math client
+    const mathContract = new Client({
         rpcUrl: import.meta.env.PUBLIC_RPC_URL,
         // Our deployed DO MATH smart contract
         contractId: import.meta.env.PUBLIC_DO_MATH,
         networkPassphrase: import.meta.env.PUBLIC_PASSPHRASE,
+        
     });
 
     const native = sac.getSACClient(import.meta.env.PUBLIC_NATIVE)
@@ -73,29 +77,16 @@
             // Upon successful execution
             console.log("Connecting Wallet...");
             console.log(keyId);
-            connectWallet(keyId).then(() => console.log("Wallet Connected"));
+            connectWallet(keyId)
+            .then(() => console.log("Wallet Connected"));
 
-        // If keyId is missing, but contract ID is present
-        } else if (contractId) {
-            // will be missing keyId_ but that's fine, 
-            // just won't be able to sign with a passkey
-
-            // Instanciate pk client and execute fundWallet function
-            pk_wallet.wallet = new PasskeyClient({
-                contractId,
-                rpcUrl: import.meta.env.PUBLIC_RPC_URL,
-                networkPassphrase: import.meta.env.PUBLIC_PASSPHRASE,
-            })
-
-            contractId_ = contractId;
-
-            //fundWallet();
-        }   
+        } 
 
         if (secret) {
             keypair = Keypair.fromSecret(secret);
+            console.log(keypair.publicKey());
         } else {
-            keypair = Keypair.fromSecret("SDR2433647HYYOOZYZHAYSHRIQ6GM7VFBBXLVJZOSBIIP6RXSMOLMPBW");
+            keypair = Keypair.random();
             url.searchParams.set("secret", keypair.secret());
             history.pushState({}, '', url);
         }
@@ -108,9 +99,17 @@
             loading.set("createWallet", true);
             loading = loading
 
+            console.log("keypair");
+            console.log(keypair);
+            console.log(keypair.publicKey());
+            console.log(keypair.secret());
+
+            let walletName = prompt("Wallet Name?");
+
             const { keyId, keyId_base64, contractId, built } = await pk_wallet.createWallet(
-                "Do Math",
-                "Do Math",
+                walletName,
+                "Chris Anatalio",
+                keypair.publicKey()
             );
 
             keyId_ = keyId_base64;
@@ -127,32 +126,64 @@
             console.log(keypair.publicKey());
             console.log(keypair.secret());
 
-            const res = await pk_server.send(built);
-
-            console.log(res);
-            console.log(keyId_);
+            await pk_server.send(built)
+            .then(res => console.log(res));
 
             url.searchParams.set("keyId", keyId_);
             history.pushState({}, '', url);
 
             contractId_ = contractId;
 
-            //fundWallet();
+            fundWallet();
         } finally {
             loading.set("createWallet", false);
             loading = loading
         }
     }
+
+	async function signIn() {
+        loading.set("signIn", true);
+        loading = loading
+
+		try {
+
+            let existingKeyId = prompt("What is your key id");
+            console.log(existingKeyId);
+
+			const { keyId_base64, contractId } = await pk_wallet.connectWallet({ existingKeyId });
+            console.log("Contract ID");
+            console.log(contractId);
+
+            keyId_ = keyId_base64;
+
+            url.searchParams.set("keyId", keyId_);
+            url.searchParams.set("contractId", contractId);
+            history.pushState({}, '', url);
+            refresh();
+
+            contractId_ = contractId;
+
+		} catch (err: any) {
+			console.log(err);
+		} finally {
+            loading.set("signIn", false);
+            loading = loading
+        }
+	}
+
     async function connectWallet(keyId: string) {
         const { keyId_base64, contractId } = await pk_wallet.connectWallet({ keyId });
 
         keyId_ = keyId_base64;
-        console.log(keypair);
 
         if (!keyId) {
             url.searchParams.set("keyId", keyId_);
             history.pushState({}, '', url);
         }
+
+        console.log(pk_wallet.wallet);
+
+        let clientWallet: PasskeyClient = pk_wallet.wallet;
 
         contractId_ = contractId;
     }
@@ -162,39 +193,36 @@
             loading.set("doMath", true);
             loading = loading;
 
-            console.log("Creating Client");
-    const deployedContract = await new Client({
-        rpcUrl: import.meta.env.PUBLIC_RPC_URL,
-        // Our deployed DO MATH smart contract
-        contractId: "CAXQTJZIN2CW2LRNR2FIRYZECYUIFV47UF65GKDLXPFTHHDCIPGSFBNL",
-        networkPassphrase: import.meta.env.PUBLIC_PASSPHRASE,
-    });
+            console.log("Creating Transaction");
 
-    console.log("Invoking Contract");
-    console.log(deployedContract);
-
-    let sacAddress: Option<Address> = None;
-
-            const at = await deployedContract.do_math({
+            const at = await mathContract.do_math({
                 source: contractId_,
                 a: 125,
-                b: 150,
-                sac: sacAddress
+                b: 130,
             });
 
+            console.log("Transaction");
             console.log(at);
-
-            console.log(keypair.secret());
-
-            console.log(keyId_)
+            console.log(keyId_);
+            console.log(contractId_);
 
             console.log("Signing");
-            await pk_wallet.sign(at, { keypair })
+
+            
+            await pk_wallet.sign(at, { keyId: keyId_ })
             .then(val => console.log(val))
             .catch(err => console.log(err));
+            
 
-            console.log("Sending");
-            const res = await pk_server.send(at.built!);
+            console.log("Transaction After Signing");
+            console.log(at);
+
+            console.log("Invoking Contract");
+
+            console.log("Sending Transaction");
+            const res = await pk_server.send(at.built!)            
+            .then(val => console.log(val))
+            .catch(err => console.log(err));
 
             console.log("Response");
             console.log(res);
@@ -246,12 +274,13 @@
             loading.set("addSigner_Ed25519", true);
             loading = loading
 
-            let addSignerKp = Keypair.fromSecret("SDR2433647HYYOOZYZHAYSHRIQ6GM7VFBBXLVJZOSBIIP6RXSMOLMPBW");
+            let addSignerKp = Keypair.fromSecret("SARTTKDQAOTLG2BJEOPIPPUTAQHSEY4QBWQO5QGGDWL4DPYBOFP3MG4F");
 
-            console.log(SignerStore.Temporary);
             console.log(keypair.publicKey());
 
-            const at = await pk_wallet.addEd25519(addSignerKp.publicKey(), new Map(), SignerStore.Persistent);
+            const signer_limits: SignerLimits = new Map();
+
+            const at = await pk_wallet.addEd25519(addSignerKp.publicKey(), signer_limits, SignerStore.Temporary);
 
             console.log("Transaction");
             console.log(at);
@@ -260,12 +289,12 @@
             console.log("key id")
             console.log(keyId_);
 
-            await pk_wallet.sign(at, { keyId: keyId_ });
+            await pk_wallet.sign(at, { keyId: keyId_});
 
-            console.log(pk_wallet)
+            console.log(at.toXDR());
 
             console.log("Sending...");
-            await pk_server.send(at.built!)
+            await pk_server.send(at.built.toXDR())
             .then(res => console.log(res))
             .catch(err => console.log(err));
 
@@ -301,6 +330,7 @@
     }
 
     async function fundWallet() {
+        console.log("Funding Wallet from " + fundPubkey);
         const amount = await native.balance({
             id: contractId_,
         })
@@ -308,11 +338,6 @@
         .catch(() => BigInt(0))
 
         console.log(amount);
-
-        console.log("fundPubKey: ");
-        console.log(fundPubkey);
-        console.log(fundSigner.signAuthEntry);
-        console.log(fundSigner.signTransaction);
 
         if (amount > 1)
             return
@@ -323,18 +348,21 @@
 			amount: BigInt(10_000_000),
 		});
 
+        console.log(built);
+
+        console.log("Sign Funding");
 		await transfer.signAuthEntries({
 			address: fundPubkey,
 			signAuthEntry: fundSigner.signAuthEntry,
 		});
 
-
-
-		const res = await pk_server.send(built!);
+		const res = await pk_server.send(built.toXDR())
+        .catch(err => console.log(err));
 
         console.log(fundPubkey);
 		console.log(res);
 	}
+
     async function transfer_Ed25519() {
         try {
             loading.set("transfer_Ed25519", true);
@@ -575,7 +603,15 @@
         {#if loading.get("createWallet")}
         <span class="loading loading-spinner"></span>
         {:else}
-            Sign In with Passkey
+            Create New PassKey Wallet
+        {/if}
+    </button>
+
+    <button class="btn btn-active btn-primary" on:click={signIn}>
+        {#if loading.get("signIn")}
+        <span class="loading loading-spinner"></span>
+        {:else}
+            Sign In to Existing PassKey Wallet
         {/if}
     </button>
 </div>

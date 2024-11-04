@@ -20,7 +20,7 @@ import type {
   Typepoint,
   Duration,
 } from '@stellar/stellar-sdk/contract';
-export * from '@stellar/stellar-sdk'
+export * from '@stellar/stellar-sdk/minimal'
 export * as contract from '@stellar/stellar-sdk/contract'
 export * as rpc from '@stellar/stellar-sdk/rpc'
 
@@ -33,7 +33,7 @@ if (typeof window !== 'undefined') {
 export const networks = {
   testnet: {
     networkPassphrase: "Test SDF Network ; September 2015",
-    contractId: "CAXQTJZIN2CW2LRNR2FIRYZECYUIFV47UF65GKDLXPFTHHDCIPGSFBNL",
+    contractId: "CB2TOIAQHT6DZRLAZWJIZMQNBIKG2LJWBXCTXDDVVBNBZCXDSQD4H2DS",
   }
 } as const
 
@@ -45,7 +45,7 @@ export interface Client {
   /**
    * Construct and simulate a do_math transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
    */
-  do_math: ({source, a, b, sac}: {source: string, a: i128, b: i128, sac: Option<string>}, options?: {
+  do_math: ({source, a, b}: {source: string, a: i128, b: i128}, options?: {
     /**
      * The fee to pay for the transaction. Default: BASE_FEE
      */
@@ -66,7 +66,7 @@ export interface Client {
 export class Client extends ContractClient {
   constructor(public readonly options: ContractClientOptions) {
     super(
-      new ContractSpec([ "AAAAAAAAAAAAAAAHZG9fbWF0aAAAAAAEAAAAAAAAAAZzb3VyY2UAAAAAABMAAAAAAAAAAWEAAAAAAAALAAAAAAAAAAFiAAAAAAAACwAAAAAAAAADc2FjAAAAA+gAAAATAAAAAQAAAAs=" ]),
+      new ContractSpec([ "AAAAAAAAAAAAAAAHZG9fbWF0aAAAAAADAAAAAAAAAAZzb3VyY2UAAAAAABMAAAAAAAAAAWEAAAAAAAALAAAAAAAAAAFiAAAAAAAACwAAAAEAAAAL" ]),
       options
     )
   }

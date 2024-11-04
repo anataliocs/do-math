@@ -13,14 +13,14 @@ export const fundKeypair = new Promise<Keypair>(async (resolve) => {
 
     const nowData = new TextEncoder().encode(now.getTime().toString());
     const hashBuffer = await crypto.subtle.digest('SHA-256', nowData);
-    const keypair = Keypair.fromRawEd25519Seed(Buffer.from(hashBuffer))
+    const keypair = Keypair.fromSecret("SBEIDWQVWNLPCP35EYQ6GLWKFQ2MDY7APRLOQ3AJNU6KSE7FXGA7C55W");
     const publicKey = keypair.publicKey()
 
-    rpc.getAccount(publicKey)
+    await rpc.getAccount(publicKey)
         .catch(() => rpc.requestAirdrop(publicKey))
         .catch(() => { })
 
-    resolve(keypair)
+    await resolve(keypair)
 })
 export const fundPubkey = (await fundKeypair).publicKey()
 export const fundSigner = basicNodeSigner(await fundKeypair, import.meta.env.PUBLIC_PASSPHRASE)

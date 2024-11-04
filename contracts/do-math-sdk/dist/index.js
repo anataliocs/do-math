@@ -10,14 +10,14 @@ if (typeof window !== 'undefined') {
 export const networks = {
     testnet: {
         networkPassphrase: "Test SDF Network ; September 2015",
-        contractId: "CAXQTJZIN2CW2LRNR2FIRYZECYUIFV47UF65GKDLXPFTHHDCIPGSFBNL",
+        contractId: "CB2TOIAQHT6DZRLAZWJIZMQNBIKG2LJWBXCTXDDVVBNBZCXDSQD4H2DS",
     }
 };
 export const Errors = {};
 export class Client extends ContractClient {
     options;
     constructor(options) {
-        super(new ContractSpec(["AAAAAAAAAAAAAAAHZG9fbWF0aAAAAAAEAAAAAAAAAAZzb3VyY2UAAAAAABMAAAAAAAAAAWEAAAAAAAALAAAAAAAAAAFiAAAAAAAACwAAAAAAAAADc2FjAAAAA+gAAAATAAAAAQAAAAs="]), options);
+        super(new ContractSpec(["AAAAAAAAAAAAAAAHZG9fbWF0aAAAAAADAAAAAAAAAAZzb3VyY2UAAAAAABMAAAAAAAAAAWEAAAAAAAALAAAAAAAAAAFiAAAAAAAACwAAAAEAAAAL"]), options);
         this.options = options;
     }
     fromJSON = {

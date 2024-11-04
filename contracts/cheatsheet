@@ -1,19 +1,29 @@
-stellar contract deploy --wasm target/wasm32-unknown-unknown/release/do_math.wasm --network testnet --source default
-stellar contract deploy --wasm target/wasm32-unknown-unknown/release/do_math_policy.wasm --network testnet --source default
+stellar contract deploy --wasm target/wasm32-unknown-unknown/release/do_math.wasm --network testnet --source SARTTKDQAOTLG2BJEOPIPPUTAQHSEY4QBWQO5QGGDWL4DPYBOFP3MG4F
 
-stellar contract bindings typescript --contract-id CDU7JH665LVVIZGCRK3ZCWYOYYW72TB5RQ5PJSBXG43RZ35CAQQ7B7TT --wasm target/wasm32-unknown-unknown/release/do_math.wasm --network testnet --output-dir do-math-sdk --overwrite
+stellar contract deploy --wasm target/wasm32-unknown-unknown/release/do_math_policy.wasm --network testnet --source SBZQW27ESTGTJPRICM6P7ADF27JMVTVAEAQJGDCS5HUAET37WPI6G5IE
+
+stellar contract bindings typescript --contract-id CB2TOIAQHT6DZRLAZWJIZMQNBIKG2LJWBXCTXDDVVBNBZCXDSQD4H2DS --wasm target/wasm32-unknown-unknown/release/do_math.wasm --network testnet --output-dir do-math-sdk --overwrite
+
+stellar contract bindings typescript --contract-id CCW2XHF4ZXIUSRCRCIG656RWCOO7454RLPTTHP4XSVA4VEKVYTPU5V7Q --wasm target/wasm32-unknown-unknown/release/do_math.wasm --network testnet --output-dir do-math-sdk --overwrite
+
+--
 
 stellar contract invoke --id CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC --network testnet --source default -- transfer --from default --to CCGF5FRIVDCKJBD2WEFN67SI64QL6YP27OZY345NYGAYNOVFFG3IZ5O4 --amount 10000000
 
 
 stellar contract invoke --id CAXQTJZIN2CW2LRNR2FIRYZECYUIFV47UF65GKDLXPFTHHDCIPGSFBNL --source SDR2433647HYYOOZYZHAYSHRIQ6GM7VFBBXLVJZOSBIIP6RXSMOLMPBW --network testnet -- do_math --source GC5WM4AVJLRKDWCG7E3C45IKLZSNLM2N4HHBEJKKXDBJ3MH2NJIQ7VPQ --a 20 --b 30
 
+--
+
 https://stellar.expert/explorer/testnet/account/GBKH6FAGVKOB6PAWQ5IAAM2DBQSJLVUDF4DXPJ5SCLDEP6KXRREFO4FX
 
+stellar contract deploy --wasm target/wasm32-unknown-unknown/release/webauthn_factory.wasm --network testnet --source SDR2433647HYYOOZYZHAYSHRIQ6GM7VFBBXLVJZOSBIIP6RXSMOLMPBW
 
+webauthn factory
+https://stellar.expert/explorer/testnet/tx/238f5eac819cf4cd4a853cda3797c4a6a7448e5cd305137c8047b0533e4ba813
+CCW2XHF4ZXIUSRCRCIG656RWCOO7454RLPTTHP4XSVA4VEKVYTPU5V7Q
 
-
-
+--
 
 --
 MATH CONTRACT
@@ -43,10 +53,15 @@ Account that "created contract"
 Go to Stellar Expert:  https://stellar.expert/explorer/testnet/tx/ad6545cc93f186a236f7ddedd24cb32189ea52f02e378c7be4071297cbe084d0
 
 
-stellar contract invoke --id CAXQTJZIN2CW2LRNR2FIRYZECYUIFV47UF65GKDLXPFTHHDCIPGSFBNL --source SDR2433647HYYOOZYZHAYSHRIQ6GM7VFBBXLVJZOSBIIP6RXSMOLMPBW --network testnet -- do_math --source GC5WM4AVJLRKDWCG7E3C45IKLZSNLM2N4HHBEJKKXDBJ3MH2NJIQ7VPQ --a 20 --b 30
+stellar contract invoke --id CB2TOIAQHT6DZRLAZWJIZMQNBIKG2LJWBXCTXDDVVBNBZCXDSQD4H2DS --source SARTTKDQAOTLG2BJEOPIPPUTAQHSEY4QBWQO5QGGDWL4DPYBOFP3MG4F --network testnet -- do_math --source GDIIEN4IIV27J2H6UVVEN4ZEMLZCXMWN6NUQCDCPR4TBYTXBYV7U746O --a 20 --b 30
 
+OLD
+--
+stellar contract invoke --id CAXQTJZIN2CW2LRNR2FIRYZECYUIFV47UF65GKDLXPFTHHDCIPGSFBNL --source SDR2433647HYYOOZYZHAYSHRIQ6GM7VFBBXLVJZOSBIIP6RXSMOLMPBW --network testnet -- do_math --source GC5WM4AVJLRKDWCG7E3C45IKLZSNLM2N4HHBEJKKXDBJ3MH2NJIQ7VPQ --a 20 --b 30
+--
 
 ----
+
 
 
 --
