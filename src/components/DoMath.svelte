@@ -419,6 +419,7 @@
         </div>
         {/if}
 
+        <div class="tooltip" data-tip="Invoke do_math function on deployed contract signing with passkey and using launchtube to push operation to network"></div>
         <button class="btn btn-secondary" on:click={doMath_Ed25519}>
             {#if loading.get("doMath_Ed25519")}
             <span class="loading loading-spinner"></span>
@@ -427,7 +428,7 @@
             {/if}
         
         </button>
-
+        </div>
     </div>
 </div>
 

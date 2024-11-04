@@ -1,6 +1,7 @@
 {
   "type": "module",
   "scripts": {
+    "preinstall": "npx only-allow pnpm",
     "dev": "astro dev",
     "start": "astro dev",
     "check": "astro check",
