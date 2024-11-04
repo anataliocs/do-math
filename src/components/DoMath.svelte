@@ -4,11 +4,8 @@
     import { Client, networks } from "do-math-sdk";
     import { PasskeyServer, PasskeyKit, SACClient, SignerStore, PasskeyClient, type SignerLimits, SignerKey } from "passkey-kit";
     import { fundPubkey, fundSigner } from "../lib/common";
-    import QRCode from 'qrcode'
-    
 
     let url: URL
-    let qr_code: string
 
     const pk_server = new PasskeyServer({
         rpcUrl: import.meta.env.PUBLIC_RPC_URL,
@@ -31,8 +28,6 @@
         rpcUrl: import.meta.env.PUBLIC_RPC_URL,
         // Network passphrase for testnet Stellar network
         networkPassphrase: import.meta.env.PUBLIC_PASSPHRASE,
-        
-
     });
 
     //Generated typescript bindings for deployed math client
@@ -41,7 +36,6 @@
         // Our deployed DO MATH smart contract
         contractId: import.meta.env.PUBLIC_DO_MATH,
         networkPassphrase: import.meta.env.PUBLIC_PASSPHRASE,
-        
     });
 
     const native = sac.getSACClient(import.meta.env.PUBLIC_NATIVE)
@@ -54,11 +48,6 @@
     let b: number;
 
     let loading: Map<string, boolean> = new Map()
-
-    $: {
-        if (contractId_ && keypair)
-            genQrCode(location.origin + `?contractId=${contractId_}&secret=${keypair.secret()}`)
-    }
 
     // Lifecycle hook that schedules a callback that runs when
     // the component is mounted in the DOM
@@ -99,13 +88,9 @@
             loading.set("createWallet", true);
             loading = loading
 
-            console.log("keypair");
-            console.log(keypair);
-            console.log(keypair.publicKey());
-            console.log(keypair.secret());
-
             let walletName = prompt("Wallet Name?");
 
+            console.log("Creating Wallet");
             const { keyId, keyId_base64, contractId, built } = await pk_wallet.createWallet(
                 walletName,
                 "Chris Anatalio",
@@ -114,18 +99,10 @@
 
             keyId_ = keyId_base64;
 
-            console.log("keyid");
-            console.log(keyId_base64);
-
-            console.log(contractId);
-
+            console.log("Built Create Wallet Transaction");
             console.log(built);
 
-            console.log("keypair");
-            console.log(keypair);
-            console.log(keypair.publicKey());
-            console.log(keypair.secret());
-
+            console.log("Sending Transaction");
             await pk_server.send(built)
             .then(res => console.log(res));
 
@@ -142,16 +119,19 @@
     }
 
 	async function signIn() {
-        loading.set("signIn", true);
-        loading = loading
-
 		try {
 
-            let existingKeyId = prompt("What is your key id");
+            loading.set("signIn", true);
+            loading = loading;
+
+            let existingKeyId = prompt("What is your key id?");
             console.log(existingKeyId);
 
+            console.log("Connecting Wallet");
 			const { keyId_base64, contractId } = await pk_wallet.connectWallet({ existingKeyId });
-            console.log("Contract ID");
+            
+            
+            console.log("Wallet Contract ID");
             console.log(contractId);
 
             keyId_ = keyId_base64;
@@ -172,6 +152,7 @@
 	}
 
     async function connectWallet(keyId: string) {
+        console.log("Connecting Wallet");
         const { keyId_base64, contractId } = await pk_wallet.connectWallet({ keyId });
 
         keyId_ = keyId_base64;
@@ -181,9 +162,10 @@
             history.pushState({}, '', url);
         }
 
-        console.log(pk_wallet.wallet);
-
         let clientWallet: PasskeyClient = pk_wallet.wallet;
+
+        console.log("Set PasskeyClient Wallet");
+        console.log(pk_wallet.wallet);
 
         contractId_ = contractId;
     }
@@ -203,17 +185,11 @@
 
             console.log("Transaction");
             console.log(at);
-            console.log(keyId_);
-            console.log(contractId_);
 
-            console.log("Signing");
-
-            
+            console.log("Signing Transaction");
             await pk_wallet.sign(at, { keyId: keyId_ })
-            .then(val => console.log(val))
             .catch(err => console.log(err));
             
-
             console.log("Transaction After Signing");
             console.log(at);
 
@@ -221,16 +197,16 @@
 
             console.log("Sending Transaction");
             const res = await pk_server.send(at.built!)            
-            .then(val => console.log(val))
             .catch(err => console.log(err));
 
-            console.log("Response");
+            console.log("Transaction Response");
             console.log(res);
 
             const meta = xdr.TransactionMeta.fromXDR(res.resultMetaXdr, "base64");
             const result = scValToNative(meta.v3().sorobanMeta()!.returnValue());
 
-            alert(`${a} + ${b} = ${result}`);
+            console.log("Invoked Smart Contract Function");
+            console.log(`${a} + ${b} = ${result}`);
 
             refresh();
         } finally {
@@ -243,11 +219,10 @@
             loading.set("doMath_Ed25519", true);
             loading = loading
 
-            const at = await contract.do_math({
+            const at = await mathContract.do_math({
                 source: contractId_,
                 a: BigInt(a),
-                b: BigInt(b),
-                sac: import.meta.env.PUBLIC_NATIVE // import.meta.env.PUBLIC_NATIVE
+                b: BigInt(b)
             });
             
             await pk_wallet.sign(at, { keypair });
@@ -274,26 +249,16 @@
             loading.set("addSigner_Ed25519", true);
             loading = loading
 
-            let addSignerKp = Keypair.fromSecret("SARTTKDQAOTLG2BJEOPIPPUTAQHSEY4QBWQO5QGGDWL4DPYBOFP3MG4F");
-
-            console.log(keypair.publicKey());
-
             const signer_limits: SignerLimits = new Map();
 
-            const at = await pk_wallet.addEd25519(addSignerKp.publicKey(), signer_limits, SignerStore.Temporary);
+            const at = await pk_wallet.addEd25519(keypair.publicKey(), signer_limits, SignerStore.Temporary);
 
-            console.log("Transaction");
+            console.log("Add Signer Transaction");
             console.log(at);
-            console.log(pk_server);
-            console.log(pk_wallet);
-            console.log("key id")
-            console.log(keyId_);
 
             await pk_wallet.sign(at, { keyId: keyId_});
 
-            console.log(at.toXDR());
-
-            console.log("Sending...");
+            console.log("Sending Add Signer Transaction...");
             await pk_server.send(at.built.toXDR())
             .then(res => console.log(res))
             .catch(err => console.log(err));
@@ -334,10 +299,7 @@
         const amount = await native.balance({
             id: contractId_,
         })
-        .then(({ result }) => result)
-        .catch(() => BigInt(0))
-
-        console.log(amount);
+        .catch(() => BigInt(0));
 
         if (amount > 1)
             return
@@ -350,7 +312,7 @@
 
         console.log(built);
 
-        console.log("Sign Funding");
+        console.log("Sign Funding Transaction");
 		await transfer.signAuthEntries({
 			address: fundPubkey,
 			signAuthEntry: fundSigner.signAuthEntry,
@@ -388,12 +350,6 @@
         }
     }
 
-    async function genQrCode(data) {
-        qr_code = await QRCode.toDataURL(data, {
-            errorCorrectionLevel: 'L',
-            margin: 0,
-        })
-    }
     function refresh() {
         a = parseInt(Math.random().toString().slice(2, 5));
         b = parseInt(Math.random().toString().slice(2, 5));
@@ -412,8 +368,10 @@
     <ul class="steps">
         <li class="step step-info">Sign-in with Passkey</li>
         <li class="step step-info">Invoke Smart Contract</li>
-        <li class="step step-info">Add Signer to Wallet</li>
-        <li class="step step-info">Transfer funds out of account</li>
+        <li class="step step-info">Add Signer</li>
+        <li class="step step-info">Invoke Contract(Ed25519 Signer)</li>
+        <li class="step step-info">Add Policy Signer</li>
+        <li class="step step-info">Invoke Contract(Policy Signer)</li>
       </ul>
 
 </div>
@@ -423,30 +381,15 @@
 
 {#if contractId_}
 
-<div role="alert" class="alert alert-success">
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      class="h-6 w-6 shrink-0 stroke-current"
-      fill="none"
-      viewBox="0 0 24 24">
-      <path
-        stroke-linecap="round"
-        stroke-linejoin="round"
-        stroke-width="2"
-        d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-    </svg>
-    <span>You have successfully setup your new smart wallet with your passkey!</span>
-  </div>
-
     <div class="divider">Deployed Contract</div>
     <div class="hero bg-base-100">
         <div class="hero-content text-center">
-        <strong>Contract ID:</strong> {contractId_}
+        <strong>Smart Wallet Contract ID:</strong> {contractId_}
         <button class="btn btn-active btn-link text-white px-2 py-1 rounded" on:click={signOut}>Sign Out</button>
     </div>
     </div>
 
-    <div class="divider divider-primary">Do-Math Contract</div>
+    <div class="divider divider-primary">Invoke Deployed Smart Contract</div>
 
     <div class="container mx-auto">
 
@@ -463,10 +406,6 @@
                     Second Int
                     <input class="input input-bordered flex items-center gap-1" type="number" name="b" id="b" bind:value={b} />
                 </label>
-
-
-        
-        
         
         {#if keyId_}
         <div class="tooltip" data-tip="Invoke do_math function on deployed contract signing with passkey and using launchtube to push operation to network">
@@ -474,7 +413,7 @@
                 {#if loading.get("doMath")}
                 <span class="loading loading-spinner"></span>
                 {:else}
-                    Invoke Do Math Function
+                    Invoke Function
                 {/if}
             </button>
         </div>
@@ -484,7 +423,7 @@
             {#if loading.get("doMath_Ed25519")}
             <span class="loading loading-spinner"></span>
             {:else}
-            Invoke Do Math Function (Ed25519)
+            Invoke Function (Ed25519)
             {/if}
         
         </button>
@@ -496,7 +435,7 @@
 
     {#if keyId_}
 
-        <div class="divider divider-warning">Add Classic Signer to Wallet</div>
+        <div class="divider divider-warning">Add Classic Signer to Smart Wallet</div>
 
 
         <div class="hero bg-base-100">
@@ -507,8 +446,9 @@
                     <div class="collapse-title text-xl font-medium">Add Signer???</div>
                     <div class="collapse-content">
                       <p>
-                        We will add a Classic Stellar account(ed25519)  signer to our wallet
-
+                        We will add a Classic Stellar account(ed25519) signer to our wallet
+                        This will allow us to invoke the smart contract function invocation with
+                        the added Ed25519 signer.
 
                       </p>
                     </div>
@@ -524,7 +464,7 @@
             </div>
         </div>
 
-        <div class="divider divider-warning">Add Policy Signer to Wallet</div>
+        <div class="divider divider-warning">Add Policy Signer to Smart Wallet</div>
 
         <div class="hero bg-base-100">
             <div class="hero-content text-center">
@@ -576,20 +516,6 @@
                 Transfer (Ed25519)
             {/if}
         </button>
-
-    {#if keypair}    
-            <a class="btn btn-error" href={location.origin + `?contractId=${contractId_}&secret=${keypair.secret()}`} target="_blank" rel="nofollow">
-                Share (Ed25519)
-            </a>
-    {/if}
-</div>
-</div>
-
-<div class="divider">URL</div>
-
-<div class="hero bg-base-100">
-    <div class="hero-content text-center">
-    <img class="" src={qr_code} alt="qr code">
 </div>
 </div>
 
