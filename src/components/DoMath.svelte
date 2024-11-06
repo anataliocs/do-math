@@ -17,6 +17,7 @@
         SignerKey,
     } from "passkey-kit";
     import { fundPubkey, fundSigner } from "../lib/common";
+    import type { AssembledTransaction } from "@stellar/stellar-sdk/contract";
 
     let url: URL;
 
@@ -94,34 +95,44 @@
         refresh();
     });
 
+    // Function called when create wallet button is clicked
     async function createWallet() {
         try {
+            // Set loading icon on button
             loading.set("createWallet", true);
             loading = loading;
 
-            let walletName = prompt("Wallet Name?");
+            //Prompt for wallet name
+            let walletName: string = prompt("Wallet Name?") || "Default Wallet";
 
             console.log("Creating Wallet");
             const { keyId, keyId_base64, contractId, built } =
+                // Call the create wallet function on the passkeys
+                // kit object we configured earlier
+                // Passing in the app and user names
                 await pk_wallet.createWallet(
                     walletName,
-                    "Chris Anatalio",
-                    keypair.publicKey(),
+                    "Chris Anatalio"
                 );
 
             keyId_ = keyId_base64;
 
+            // Built is the assembled transaction
             console.log("Built Create Wallet Transaction");
             console.log(built);
 
+            // User the passkeys server to send the create wallet
+            // transaction
             console.log("Sending Transaction");
-            await pk_server.send(built).then((res) => console.log(res));
+            await pk_server.send(built)
+            .then((res) => console.log(res));
 
             url.searchParams.set("keyId", keyId_);
             history.pushState({}, "", url);
 
             contractId_ = contractId;
 
+            // Then fund the wallet
             fundWallet();
         } finally {
             loading.set("createWallet", false);
@@ -129,17 +140,23 @@
         }
     }
 
+    // Function to sign into existing smart wallet with Passkey
     async function signIn() {
         try {
+            //Set loading icon
             loading.set("signIn", true);
             loading = loading;
 
-            let existingKeyId = prompt("What is your key id?");
+            // Prompt for the key id
+            // Or close this window and a menu of existing passkeys
+            // will pop up
+            let existingKeyId: string = prompt("What is your key id?") || "";
             console.log(existingKeyId);
 
+            // Connect to the existing passkey wallet
             console.log("Connecting Wallet");
             const { keyId_base64, contractId } = await pk_wallet.connectWallet({
-                existingKeyId,
+                keyId: existingKeyId,
             });
 
             console.log("Wallet Contract ID");
@@ -147,6 +164,7 @@
 
             keyId_ = keyId_base64;
 
+            // Update params and refresh
             url.searchParams.set("keyId", keyId_);
             url.searchParams.set("contractId", contractId);
             history.pushState({}, "", url);
@@ -174,14 +192,13 @@
             history.pushState({}, "", url);
         }
 
-        let clientWallet: PasskeyClient = pk_wallet.wallet;
-
-        console.log("Set PasskeyClient Wallet");
+        console.log("PasskeyClient Wallet");
         console.log(pk_wallet.wallet);
 
         contractId_ = contractId;
     }
 
+    // Invokes deployed smart contract and signs with passkey
     async function doMath() {
         try {
             loading.set("doMath", true);
@@ -189,15 +206,17 @@
 
             console.log("Creating Transaction");
 
+            // Invoke deployed smart contract
             const at = await mathContract.do_math({
                 source: contractId_,
-                a: 125,
-                b: 130,
+                a: BigInt(a),
+                b: BigInt(b),
             });
 
-            console.log("Transaction");
+            console.log("Function Invocation Transaction");
             console.log(at);
 
+            // Sign transaction with passkey
             console.log("Signing Transaction");
             await pk_wallet
                 .sign(at, { keyId: keyId_ })
@@ -208,6 +227,7 @@
 
             console.log("Invoking Contract");
 
+            // Send transaction using passkeys server and launchtube
             console.log("Sending Transaction");
             const res = await pk_server
                 .send(at.built!)
@@ -216,6 +236,7 @@
             console.log("Transaction Response");
             console.log(res);
 
+            // Parse transaction response
             const meta = xdr.TransactionMeta.fromXDR(
                 res.resultMetaXdr,
                 "base64",
@@ -224,7 +245,7 @@
                 meta.v3().sorobanMeta()!.returnValue(),
             );
 
-            console.log("Invoked Smart Contract Function");
+            console.log("Invoked Smart Contract Function Result");
             console.log(`${a} + ${b} = ${result}`);
 
             refresh();
@@ -261,20 +282,23 @@
 
             refresh();
         } catch {
-            alert("❌ Failed to do math");
+            alert("❌ Failed to invoke contract function");
         } finally {
             loading.set("doMath_Ed25519", false);
             loading = loading;
         }
     }
 
+    // Function that adds a signer to your smart wallet
     async function addSigner_Ed25519() {
         try {
             loading.set("addSigner_Ed25519", true);
             loading = loading;
 
+            // Define empty signer limits map
             const signer_limits: SignerLimits = new Map();
 
+            // Call passkeys kit add ed25519 signer function
             const at = await pk_wallet.addEd25519(
                 keypair.publicKey(),
                 signer_limits,
@@ -284,11 +308,13 @@
             console.log("Add Signer Transaction");
             console.log(at);
 
+            // Sign transaction with passkey
             await pk_wallet.sign(at, { keyId: keyId_ });
 
+            // Submit transaction using passkeys server and launchtube
             console.log("Sending Add Signer Transaction...");
             await pk_server
-                .send(at.built.toXDR())
+                .send(at.built!)
                 .then((res) => console.log(res))
                 .catch((err) => console.log(err));
         } finally {
@@ -296,11 +322,14 @@
             loading = loading;
         }
     }
+
+    // Attach Policy signer to smart wallet
     async function attach_Policy() {
         try {
             loading.set("attach_Policy", true);
             loading = loading;
 
+            // Setup policy signer limits using the do math policy contract
             const ed25519_limits: SignerLimits = new Map();
 
             // ed25519 key can call do_math contract but only if it also calls the do_math policy
@@ -308,13 +337,17 @@
                 SignerKey.Policy(import.meta.env.PUBLIC_DO_MATH_POLICY),
             ]);
 
+            // Invoke passkeys wallet add signer function passing in the policy limits
             const at = await pk_wallet.addEd25519(
                 keypair.publicKey(),
                 ed25519_limits,
                 SignerStore.Temporary,
             );
 
+            // Sign the transaction using passkeys kit
             await pk_wallet.sign(at, { keyId: keyId_ });
+
+            // Send the transaction using passkeys server and launchtube
             const res = await pk_server.send(at.built!);
 
             console.log(res);
@@ -326,13 +359,14 @@
 
     async function fundWallet() {
         console.log("Funding Wallet from " + fundPubkey);
-        const amount = await native
+        const amount: bigint | AssembledTransaction<bigint> = await native
             .balance({
                 id: contractId_,
             })
             .catch(() => BigInt(0));
 
-        if (amount > 1) return;
+            
+        if (Number(amount) > 1) return;
 
         const { built, ...transfer } = await native.transfer({
             to: contractId_,
@@ -349,7 +383,7 @@
         });
 
         const res = await pk_server
-            .send(built.toXDR())
+            .send(built!)
             .catch((err) => console.log(err));
 
         console.log(fundPubkey);
@@ -409,7 +443,7 @@
 
 <div class="flex w-full flex-col">
     {#if contractId_}
-        <div class="divider">Deployed Contract</div>
+        <div class="divider">Deployed Wallet Contract</div>
         <div class="hero bg-base-100">
             <div class="hero-content text-center">
                 <strong>Smart Wallet Contract ID:</strong>

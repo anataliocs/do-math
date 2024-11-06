@@ -8,6 +8,11 @@ Passkey kit is a basic TypeScript SDK for creating and managing Stellar smart wa
 > [!WARNING]  
 > You must use pnpm for this project to work
 
+Install pnpm
+```
+curl -fsSL https://get.pnpm.io/install.sh | sh -
+```
+
 
 On the client:
 ```ts
